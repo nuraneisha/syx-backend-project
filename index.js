@@ -291,8 +291,9 @@ app.post("/users", async (req, res) => {
 app.get("/users/:user_id", async (req, res) => {
     const { user_id } = req.params
     try {
-        const result = await pool.query("SELECT users.*,purchase_history.*,product.prod_category FROM users JOIN purchase_history ON users.user_id = purchase_history.user_id JOIN product ON purchase_history.prod_id = product.prod_id WHERE users.user_id = $1", [user_id]);
-        return res.status(200).json(result.rows[0]);
+        const result = await pool.query("SELECT users.*,purchase_history.*,product.prod_category FROM users LEFT JOIN purchase_history ON users.user_id = purchase_history.user_id JOIN product ON purchase_history.prod_id = product.prod_id WHERE users.user_id = $1", [user_id]);
+        console.log(result);
+        return res.status(200).json({});
     } catch (err) {
         console.error("Select User Error:", err);
         res.status(500).json({ error: err.message });
