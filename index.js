@@ -363,8 +363,8 @@ app.post("/checkout", async (req, res) => {
                     quantity: item.quantity || 1,
                 };
             }),
-            success_url: "https://syx.vercel.app/",
-            cancel_url: "https://syx.vercel.app//shopping",
+            success_url: "https://syx-project.vercel.app",
+            cancel_url: "https://syx-project.vercel.app/shopping",
         });
 
 
