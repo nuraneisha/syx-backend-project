@@ -372,6 +372,7 @@ app.post("/checkout", async (req, res) => {
         res.status(500).json({ error: "Something went wrong" });
     }
 });
+// ✅ sucess payment endpoint
 app.get("/success", async (req, res) => {
     const sessionId = req.query.session_id;
     const user_id = req.query.user_id;
