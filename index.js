@@ -382,26 +382,48 @@ app.get("/success", async (req, res) => {
 
         const result = await pool.query(`SELECT * FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
         const selectedItems = result.rows;
-        console.log(`hi`, selectedItems);
+        console.log("Session ID:", sessionId);
+        console.log("User ID:", user_id);
+        console.log("Selected items:", selectedItems);
 
         for (const item of selectedItems) {
-            const inserted = await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
-                [
-                    item.user_id,
-                    item.prod_id,
-                    item.prod_name,
-                    item.prod_education,
-                    item.prod_price,
-                    item.sizes,
-                    item.quantity,
-                ]
-            )
-            console.log(`h2`, inserted);
+            try {
+                const inserted = await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
+                    [
+                        item.user_id,
+                        item.prod_id,
+                        item.prod_name,
+                        item.prod_education,
+                        item.prod_price,
+                        item.sizes,
+                        item.quantity,
+                    ]
+                )
+            }
+            catch (err) {
+
+                console.error(`FailedInserted product id: ${item.prod_id}`, err);
+                console.error(`FailedInserted product name: ${item.prod_name}`, err);
+                console.error(`FailedInserted produc educationt:${item.prod_education}`, err);
+                console.error(`FailedInserted product price: ${item.prod_price}`, err);
+                console.error(`FailedInserted product sizes: ${item.prod_sizes}`, err);
+                console.error(`FailedInserted product quantity: ${item.quantity}`, err);
+
+
+            }
+            console.log(`Inserted product: ${user_id}`);
+            console.log(`Inserted product id: ${item.prod_id}`);
+            console.log(`Inserted product name: ${item.prod_name}`);
+            console.log(`Inserted produc educationt: ${item.prod_education}`);
+            console.log(`Inserted product price: ${item.prod_price}`);
+            console.log(`Inserted product sizes: ${item.prod_sizes}`);
+            console.log(`Inserted product quantity: ${item.prod_quantity}`);
+
 
         }
 
         const deleted = await pool.query(`DELETE FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
-        console.log(deleted);
+
         res.status(200).json({ message: "Thank you for your purchase" });
     } catch (err) {
         console.error("Error:", err);
