@@ -385,13 +385,13 @@ app.get("/success", async (req, res) => {
         for (const item of cartItems.rows) {
             await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
                 [
-                    user_id = user_id,
-                    prod_id = item.prod_id,
-                    prod_name = item.prod_name,
-                    prod_education = item.prod_education,
-                    prod_price = item.prod_price,
-                    sizes = item.sizes,
-                    quantity = item.quantity,
+                    user_id,
+                    item.prod_id,
+                    item.prod_name,
+                    item.prod_education,
+                    item.prod_price,
+                    item.sizes,
+                    item.quantity,
                 ]
             )
         }
