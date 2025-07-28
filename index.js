@@ -374,7 +374,7 @@ app.post("/checkout", async (req, res) => {
 });
 
 // ✅ sucess payment endpoint
-app.post("/success", async (req, res) => {
+app.get("/success", async (req, res) => {
     const sessionId = req.query.session_id;
     const user_id = req.query.user_id;
 
