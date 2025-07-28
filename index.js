@@ -213,19 +213,19 @@ app.post("/products/apparel/:prod_id", async (req, res) => {
 });
 
 
-// ✅ Get cart data
+// ✅ Show the cart & prod_cat sort old->new
 app.get("/cart/:userId", async (req, res) => {
     const { userId } = req.params;
     try {
         const result = await pool.query("SELECT cart.*, product.prod_category FROM cart JOIN product ON cart.prod_id = product.prod_id WHERE cart.user_id = $1 ORDER BY cart.id ASC", [userId]);
         return res.status(200).json({ items: result.rows });
     } catch (err) {
-        console.error("Cart Count Error:", err);
+        console.error("Cart Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ✅ Delete cart data
+// ✅ Delete and refreshed the cart
 app.delete("/cart/delete/:id", async (req, res) => {
     const { id } = req.params;
     try {
@@ -234,7 +234,7 @@ app.delete("/cart/delete/:id", async (req, res) => {
         const result = await pool.query("SELECT * FROM cart where user_id=$1", [user_id])
         return res.status(200).json({ items: result.rows });
     } catch (err) {
-        console.error("Cart Count Error:", err);
+        console.error("Delete cart Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -270,7 +270,7 @@ app.get("/cart/checkout/:user_id", async (req, res) => {
         const result = await pool.query("SELECT SUM(quantity*REPLACE(prod_price, 'MYR', '')::NUMERIC)AS total_cost FROM cart WHERE user_id=$1 AND selected=true", [user_id]);
         return res.status(200).json(result.rows);
     } catch (err) {
-        console.error("Cart Count Error:", err);
+        console.error("Cart Total Cost Error:", err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -363,32 +363,48 @@ app.post("/checkout", async (req, res) => {
                     quantity: item.quantity || 1,
                 };
             }),
-            success_url: "https://syx-project.vercel.app",
+            success_url: `https://syx-project.vercel.app/success?session_id={CHECKOUT_SESSION_ID}&user_id=${user_id}`,
             cancel_url: "https://syx-project.vercel.app/shopping",
         });
-
-
-        for (const item of selectedItems) {
-            await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
-                [
-                    item.user_id,
-                    item.prod_id,
-                    item.prod_name,
-                    item.prod_education,
-                    item.prod_price,
-                    item.sizes,
-                    item.quantity,
-                ]
-            )
-
-        }
-
-        await pool.query(`DELETE FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
-
         res.status(200).json({ url: session.url });
     } catch (error) {
         console.error("Stripe error:", error);
         res.status(500).json({ error: "Something went wrong" });
+    }
+});
+app.get("/success", async (req, res) => {
+    const sessionId = req.query.session_id;
+    const user_id = req.query.user_id;
+
+    try {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+        const cartItems = await pool.query(`SELECT * FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
+
+        for (const item of cartItems.rows) {
+            await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
+                [
+                    user_id = user_id,
+                    prod_id = item.prod_id,
+                    prod_name = item.prod_name,
+                    prod_education = item.prod_education,
+                    prod_price = item.prod_price,
+                    sizes = item.sizes,
+                    quantity = item.quantity,
+                ]
+            )
+        }
+
+        await pool.query(`DELETE FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
+
+        res.send(`
+          <h1>Thank you for your purchase!</h1>
+          <p>Session ID: ${session.id}</p>
+          <p>Amount paid: RM ${session.amount_total / 100}</p>
+        `);
+    } catch (err) {
+        console.error("Error:", err);
+        res.status(500).send("Something went wrong");
     }
 });
 
