@@ -383,6 +383,10 @@ app.post("/success", async (req, res) => {
 
         const result = await pool.query(`SELECT * FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
         const selectedItems = result.rows;
+        if (selectedItems.length === 0) {
+            console.log("No selected items found for user:", user_id);
+        }
+
 
         for (const item of selectedItems) {
             try {
