@@ -408,7 +408,7 @@ app.get("/success", async (req, res) => {
                 console.error(`Failed Inserted product name: ${item.prod_name}`, err);
                 console.error(`Failed Inserted produc educationt:${item.prod_education}`, err);
                 console.error(`Failed Inserted product price: ${item.prod_price}`, err);
-                console.error(`Failed Inserted product sizes: ${item.prod_sizes}`, err);
+                console.error(`Failed Inserted product sizes: ${item.sizes}`, err);
                 console.error(`Failed Inserted product quantity: ${item.quantity}`, err);
 
 
