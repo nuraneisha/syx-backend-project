@@ -380,12 +380,14 @@ app.get("/success", async (req, res) => {
     try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-        const cartItems = await pool.query(`SELECT * FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
+        const result = await pool.query(`SELECT * FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
+        const selectedItems = result.rows;
+        console.log(`hi`, selectedItems);
 
-        for (const item of cartItems.rows) {
-            await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
+        for (const item of selectedItems) {
+            const inserted = await pool.query(`INSERT INTO purchase_history (user_id, prod_id, prod_name, prod_education, prod_price, sizes, quantity,created_at)VALUES ($1, $2, $3, $4, $5, $6, $7,NOW())`,
                 [
-                    user_id,
+                    item.user_id,
                     item.prod_id,
                     item.prod_name,
                     item.prod_education,
@@ -394,15 +396,13 @@ app.get("/success", async (req, res) => {
                     item.quantity,
                 ]
             )
+            console.log(`h2`, inserted);
+
         }
 
-        await pool.query(`DELETE FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
-
-        res.send(`
-          <h1>Thank you for your purchase!</h1>
-          <p>Session ID: ${session.id}</p>
-          <p>Amount paid: RM ${session.amount_total / 100}</p>
-        `);
+        const deleted = await pool.query(`DELETE FROM cart WHERE user_id = $1 AND selected = true`, [user_id]);
+        console.log(deleted);
+        res.status(200).json({ message: "Thank you for your purchase" });
     } catch (err) {
         console.error("Error:", err);
         res.status(500).send("Something went wrong");
